@@ -85,51 +85,50 @@ runs:
         RELEASE_NOTES: ${{ fromJSON(steps.get-release.outputs.result).body }}
         RELEASE_URL: ${{ fromJSON(steps.get-release.outputs.result).url }}
       run: |
-        # ... predchádzajúce kroky ...
+        # Predchádzajúce kroky ...
 
-          # Step 1: Get existing page content (update with your pageId)
-          existing_page_id="${{ inputs.existingPageId }}"
-          existing_page_response=$(curl --request GET \
-              --url '${{ inputs.ConfluenceBaseUrl }}/wiki/api/v2/pages/'"$existing_page_id" \
-              --user '${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}' \
-              --header 'Accept: application/json')
+        # Step 1: Get existing page content (using your pageId)
+        existing_page_id="${{ inputs.existingPageId }}"
+        existing_page_response=$(curl --request GET \
+            --url "${{ inputs.ConfluenceBaseUrl }}/wiki/api/v2/pages/${existing_page_id}" \
+            --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
+            --header 'Accept: application/json')
 
-          # Extract the current content of the page
-          existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value')
+        # Extract the current content of the page
+        existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value')
 
-          # Add additional line before the content
-          RELEASE_NOTES="Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)\n\n${RELEASE_NOTES}"
+        # Add additional line before the content
+        RELEASE_NOTES="Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)\n\n${RELEASE_NOTES}"
 
-          # ... ďalšie úpravy RELEASE_NOTES, ak je to potrebné ...
+        # Combine existing content with new release notes
+        # Add the new content above the existing content
+        new_content="$RELEASE_NOTES\n\n$existing_content"
 
-          # Combine existing content with new release notes
-          new_content="$RELEASE_NOTES\n\n$existing_content"
+        # Prepare the payload for update
+        payload=$(jq -n \
+        --arg value "$new_content" \
+        --arg version "$(echo "$existing_page_response" | jq -r '.version.number + 1')" \
+        --arg title "Release: ${{ inputs.tag }}" \
+        '{
+            "version": {
+                "number": ($version | tonumber)
+            },
+            "title": $title,
+            "type": "page",
+            "body": {
+                "storage": {
+                    "value": $value,
+                    "representation": "storage"
+                }
+            }
+        }')
 
-          # Prepare the payload for update
-          payload=$(jq -n \
-          --arg value "$new_content" \
-          --arg version "$(echo "$existing_page_response" | jq -r '.version.number + 1')" \
-          --arg title "Release: ${{ inputs.tag }}" \
-          '{
-              "version": {
-                  "number": ($version | tonumber)
-              },
-              "title": $title,
-              "type": "page",
-              "body": {
-                  "storage": {
-                      "value": $value,
-                      "representation": "storage"
-                  }
-              }
-          }')
+        # Step 3: Update the existing page with new content
+        update_response=$(curl --request PUT \
+            --url "${{ inputs.ConfluenceBaseUrl }}/wiki/api/v2/pages/${existing_page_id}" \
+            --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data "$payload")
 
-          # Step 3: Update the existing page with new content
-          update_response=$(curl --request PUT \
-              --url '${{ inputs.ConfluenceBaseUrl }}/wiki/api/v2/pages/'"$existing_page_id" \
-              --user '${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}' \
-              --header 'Accept: application/json' \
-              --header 'Content-Type: application/json' \
-              --data "$payload")
-
-          echo "Update Response: $update_response"
+        echo "Update Response: $update_response"
