@@ -90,7 +90,7 @@ runs:
         # Step 1: Get existing page content (using your pageId)
         existing_page_id="${{ inputs.existingPageId }}"
         existing_page_response=$(curl --request GET \
-            --url "${{ inputs.ConfluenceBaseUrl }}/wiki/api/v2/pages/${existing_page_id}" \
+            --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${existing_page_id}" \
             --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
             --header 'Accept: application/json')
 
@@ -123,9 +123,9 @@ runs:
             }
         }')
 
-        # Step 3: Update the existing page with new content
+        # Step 3: Update the existing page with new content using Confluence REST API v1
         update_response=$(curl --request PUT \
-            --url "${{ inputs.ConfluenceBaseUrl }}/wiki/api/v2/pages/${existing_page_id}" \
+            --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${existing_page_id}" \
             --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
             --header 'Accept: application/json' \
             --header 'Content-Type: application/json' \
