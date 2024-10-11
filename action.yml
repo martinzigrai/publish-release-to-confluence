@@ -86,7 +86,9 @@ runs:
         RELEASE_URL: ${{ fromJSON(steps.get-release.outputs.result).url }}
       run: |
         # Add additional line before the content
-        RELEASE_NOTES="✅ New *${{ inputs.appName }}* Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)\n\n${RELEASE_NOTES}"
+        RELEASE_NOTES="Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)\n\n${RELEASE_NOTES}"
+
+         #RELEASE_NOTES="✅ New *${{ inputs.appName }}* Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)\n\n${RELEASE_NOTES}"
 
         # Remove '##' from RELEASE_NOTES
         RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed 's/## //g')
