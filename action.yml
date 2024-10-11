@@ -34,11 +34,11 @@ inputs:
     required: true
     type: string
   confluence_email:
-    description: 'Confluence Email'
+    description: "Confluence Email"
     required: true
     type: string
   confluence_api_token:
-    description: 'Confluence API Token'
+    description: "Confluence API Token"
     required: true
     type: string
   appName:
@@ -85,58 +85,51 @@ runs:
         RELEASE_NOTES: ${{ fromJSON(steps.get-release.outputs.result).body }}
         RELEASE_URL: ${{ fromJSON(steps.get-release.outputs.result).url }}
       run: |
-        # Add additional line before the content
-        RELEASE_NOTES="Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)\n\n${RELEASE_NOTES}"
+        # ... predchádzajúce kroky ...
 
-         #RELEASE_NOTES="✅ New *${{ inputs.appName }}* Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)\n\n${RELEASE_NOTES}"
+          # Step 1: Get existing page content (update with your pageId)
+          existing_page_id="${{ inputs.existingPageId }}"
+          existing_page_response=$(curl --request GET \
+              --url '${{ inputs.ConfluenceBaseUrl }}/wiki/api/v2/pages/'"$existing_page_id" \
+              --user '${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}' \
+              --header 'Accept: application/json')
 
-        # Remove '##' from RELEASE_NOTES
-        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed 's/## //g')
+          # Extract the current content of the page
+          existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value')
 
-        # Remove extra HTML
-        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed -r 's/<[^>]*>//g')
+          # Add additional line before the content
+          RELEASE_NOTES="Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)\n\n${RELEASE_NOTES}"
 
-        # Replace markdown links with confluence links
-        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed -r 's/\[([^]]+)\]\(([^)]+)\)/[\1|\2]/g')
+          # ... ďalšie úpravy RELEASE_NOTES, ak je to potrebné ...
 
-        # Replace @username with a link to the user's GitHub profile
-        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed -r 's/@([^ ]+)/[@\1|https:\/\/github.com\/\1]/g')
+          # Combine existing content with new release notes
+          new_content="$RELEASE_NOTES\n\n$existing_content"
 
-        # Replace '\n' with '<br/>'
-        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed 's/\\n/<br\/>/g')
+          # Prepare the payload for update
+          payload=$(jq -n \
+          --arg value "$new_content" \
+          --arg version "$(echo "$existing_page_response" | jq -r '.version.number + 1')" \
+          --arg title "Release: ${{ inputs.tag }}" \
+          '{
+              "version": {
+                  "number": ($version | tonumber)
+              },
+              "title": $title,
+              "type": "page",
+              "body": {
+                  "storage": {
+                      "value": $value,
+                      "representation": "storage"
+                  }
+              }
+          }')
 
-        # Prepare the payload
-        payload=$(jq -n \
-        --arg spaceId "${{ inputs.spaceId }}" \
-        --arg status "${{ inputs.status }}" \
-        --arg title "Release: ${{ inputs.tag }}" \
-        --arg parentId "${{ inputs.parentId }}" \
-        --arg value "$RELEASE_NOTES" \
-        '{
-            "spaceId": $spaceId,
-            "status": $status,
-            "title": $title,
-            "parentId": $parentId,
-            "body": {
-            "representation": "wiki",
-            "value": $value
-            }
-        }'
-        )
+          # Step 3: Update the existing page with new content
+          update_response=$(curl --request PUT \
+              --url '${{ inputs.ConfluenceBaseUrl }}/wiki/api/v2/pages/'"$existing_page_id" \
+              --user '${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}' \
+              --header 'Accept: application/json' \
+              --header 'Content-Type: application/json' \
+              --data "$payload")
 
-        echo "Payload: $payload"
-        response=$(curl --request POST \
-            --url '${{ inputs.ConfluenceBaseUrl }}/wiki/api/v2/pages' \
-            --user '${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}' \
-            --header 'Accept: application/json' \
-            --header 'Content-Type: application/json' \
-            --data "$payload")
-        echo "Response: $response"
-        pageId=$(echo "$response" | jq -r '.id')
-        echo "Page ID: $pageId"
-        if [ "$pageId" == "null" ]; then
-          echo "Failed to create page"
-          exit 1
-        fi
-        echo "pageId=$pageId" >> $GITHUB_ENV
-        #echo "pageId=$pageId" >> $GITHUB_ENV_FILE
+          echo "Update Response: $update_response"
