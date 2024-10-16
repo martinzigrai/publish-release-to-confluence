@@ -95,7 +95,10 @@ runs:
             --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
             --header 'Accept: application/json')
 
-        existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value // ""') 
+        echo "Existing Page Response: $existing_page_response"
+
+        existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value // ""')
+        echo "Existing Content: $existing_content"
 
         RELEASE_NOTES="Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)\n\n${RELEASE_NOTES}"
         if [[ -n "$existing_content" ]]; then
@@ -104,7 +107,9 @@ runs:
             combined_content="$RELEASE_NOTES"
         fi
 
-        new_version=$(echo "$existing_page_response" | jq -r '.version.number + 1')
+        new_version=$(echo "$existing_page_response" | jq -r '.version.number // 0 + 1')
+        echo "New Version: $new_version"
+
         payload=$(jq -n \
             --arg value "$combined_content" \
             --arg version "$new_version" \
@@ -122,7 +127,9 @@ runs:
                     }
                 }
             }')
-            
+
+        echo "Payload: $payload"
+
         update_response=$(curl --request PUT \
             --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${existing_page_id}" \
             --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
