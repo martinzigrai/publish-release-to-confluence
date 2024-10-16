@@ -118,7 +118,7 @@ runs:
         echo "Payload: $payload"  # Log payload
 
         update_response=$(curl --request PUT \
-        --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${existing_page_id}" \
+        --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${parentId}" \
         --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
         --header 'Accept: application/json' \
         --header 'Content-Type: application/json' \
