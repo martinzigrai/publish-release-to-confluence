@@ -117,12 +117,11 @@ runs:
 
         echo "Payload: $payload"  # Log payload
 
-        # Create new page in Confluence
-        create_response=$(curl --request POST \
-            --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/" \
-            --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
-            --header 'Accept: application/json' \
-            --header 'Content-Type: application/json' \
-            --data "$payload")
+        update_response=$(curl --request PUT \
+        --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${existing_page_id}" \
+        --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
+        --header 'Accept: application/json' \
+        --header 'Content-Type: application/json' \
+        --data "$payload")
 
         echo "Create Response: $create_response"  # Log create response
