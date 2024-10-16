@@ -53,10 +53,6 @@ inputs:
     Description: Name of the repository. This will be used to fetch the release notes.
     required: true
     type: string
-  existingPageId:
-    description: ID of the existing Confluence page to update
-    required: true
-    type: string
 
 runs:
   using: "composite"
@@ -82,44 +78,35 @@ runs:
               url: `https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}/releases/tag/${tag}`
           };
 
-    - name: Post Release Notes to Confluence
-      id: post_to_confluence
+    - name: Create Release Notes Page in Confluence
+      id: create_confluence_page
       shell: bash
       env:
         RELEASE_NOTES: ${{ fromJSON(steps.get-release.outputs.result).body }}
         RELEASE_URL: ${{ fromJSON(steps.get-release.outputs.result).url }}
       run: |
-        existing_page_id="${{ inputs.existingPageId }}"
-        existing_page_response=$(curl --request GET \
-            --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${existing_page_id}" \
-            --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
-            --header 'Accept: application/json')
+        parent_id="${{ inputs.parentId }}"
+        echo "Parent Page ID: $parent_id"  # Log parent page ID
 
-        echo "Existing Page Response: $existing_page_response"
-
-        existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value // ""')
-        echo "Existing Content: $existing_content"
-
+        # Create new Confluence page payload
         RELEASE_NOTES="Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)\n\n${RELEASE_NOTES}"
-        if [[ -n "$existing_content" ]]; then
-            combined_content="$existing_content\n$RELEASE_NOTES"
-        else
-            combined_content="$RELEASE_NOTES"
-        fi
-
-        new_version=$(echo "$existing_page_response" | jq -r '.version.number // 0 + 1')
-        echo "New Version: $new_version"
-
+        
         payload=$(jq -n \
-            --arg value "$combined_content" \
-            --arg version "$new_version" \
+            --arg value "$RELEASE_NOTES" \
+            --arg spaceId "${{ inputs.spaceId }}" \
+            --arg parentId "$parent_id" \
             --arg title "Release: ${{ inputs.tag }}" \
             '{
-                "version": {
-                    "number": ($version | tonumber)
-                },
-                "title": $title,
                 "type": "page",
+                "title": $title,
+                "space": {
+                    "key": $spaceId
+                },
+                "ancestors": [
+                    {
+                        "id": ($parentId | tonumber)
+                    }
+                ],
                 "body": {
                     "storage": {
                         "value": $value,
@@ -128,13 +115,14 @@ runs:
                 }
             }')
 
-        echo "Payload: $payload"
+        echo "Payload: $payload"  # Log payload
 
-        update_response=$(curl --request PUT \
-            --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${existing_page_id}" \
+        # Create new page in Confluence
+        create_response=$(curl --request POST \
+            --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/" \
             --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
             --header 'Accept: application/json' \
             --header 'Content-Type: application/json' \
             --data "$payload")
 
-        echo "Update Response: $update_response"
+        echo "Create Response: $create_response"  # Log create response
