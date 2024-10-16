@@ -53,6 +53,10 @@ inputs:
     Description: Name of the repository. This will be used to fetch the release notes.
     required: true
     type: string
+  existingPageId:
+    description: ID of the existing Confluence page to update
+    required: true
+    type: string
 
 runs:
   using: "composite"
@@ -85,45 +89,40 @@ runs:
         RELEASE_NOTES: ${{ fromJSON(steps.get-release.outputs.result).body }}
         RELEASE_URL: ${{ fromJSON(steps.get-release.outputs.result).url }}
       run: |
-        # Predchádzajúce kroky ...
-
-        # Step 1: Get existing page content (using your pageId)
         existing_page_id="${{ inputs.existingPageId }}"
         existing_page_response=$(curl --request GET \
             --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${existing_page_id}" \
             --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
             --header 'Accept: application/json')
 
-        # Extract the current content of the page
-        existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value')
+        existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value // ""') 
 
-        # Add additional line before the content
         RELEASE_NOTES="Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)\n\n${RELEASE_NOTES}"
+        if [[ -n "$existing_content" ]]; then
+            combined_content="$existing_content\n$RELEASE_NOTES"
+        else
+            combined_content="$RELEASE_NOTES"
+        fi
 
-        # Combine existing content with new release notes
-        # Add the new content above the existing content
-        new_content="$RELEASE_NOTES\n\n$existing_content"
-
-        # Prepare the payload for update
+        new_version=$(echo "$existing_page_response" | jq -r '.version.number + 1')
         payload=$(jq -n \
-        --arg value "$new_content" \
-        --arg version "$(echo "$existing_page_response" | jq -r '.version.number + 1')" \
-        --arg title "Release: ${{ inputs.tag }}" \
-        '{
-            "version": {
-                "number": ($version | tonumber)
-            },
-            "title": $title,
-            "type": "page",
-            "body": {
-                "storage": {
-                    "value": $value,
-                    "representation": "storage"
+            --arg value "$combined_content" \
+            --arg version "$new_version" \
+            --arg title "Release: ${{ inputs.tag }}" \
+            '{
+                "version": {
+                    "number": ($version | tonumber)
+                },
+                "title": $title,
+                "type": "page",
+                "body": {
+                    "storage": {
+                        "value": $value,
+                        "representation": "storage"
+                    }
                 }
-            }
-        }')
-
-        # Step 3: Update the existing page with new content using Confluence REST API v1
+            }')
+            
         update_response=$(curl --request PUT \
             --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${existing_page_id}" \
             --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
