@@ -119,6 +119,8 @@ runs:
         RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed -r 's/@([^ ]+)/[@\1|https:\/\/github.com\/\1]/g')
         RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed 's/\n/<br\/>/g')
 
+        echo "$RELEASE_NOTES"
+
         # Combine existing content with new changelog
         RELEASE_NOTES="### Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)<br><br>${{ steps.get-changelog.outputs.changelogContent }}"
         if [[ -n "$existing_content" ]]; then
@@ -160,7 +162,7 @@ runs:
           --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
           --header 'Accept: application/json' \
           --header 'Content-Type: application/json' \
-          --data "$payload")
+          --data "$payload" 2>/dev/null)  # Suppress curl error output
 
         # Log response and error checking
         echo "Update Response: $update_response"  # Log update response
