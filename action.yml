@@ -112,12 +112,12 @@ runs:
         echo "$existing_content"
         echo "Existing version: $existing_version"
 
+        # Preprocess release notes
         RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed 's/## //g')
         RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed -r 's/<[^>]*>//g')
         RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed -r 's/\[([^]]+)\]\(([^)]+)\)/[\1|\2]/g')
         RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed -r 's/@([^ ]+)/[@\1|https:\/\/github.com\/\1]/g')
-        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed 's/\\n/<br\/>/g')
-
+        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed 's/\n/<br\/>/g')
 
         # Combine existing content with new changelog
         RELEASE_NOTES="### Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)<br><br>${{ steps.get-changelog.outputs.changelogContent }}"
@@ -147,7 +147,7 @@ runs:
                 "body": {
                     "storage": {
                         "value": $value,
-                        "representation": "storage"
+                        "representation": "storage"  # Adjust if needed for new editor
                     }
                 }
             }')
