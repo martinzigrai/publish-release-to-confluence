@@ -73,7 +73,7 @@ runs:
           const { data: fileInfo } = await github.rest.repos.getContent({
             owner: repoOwner,
             repo: repoName,
-            path: 'changelog.md'
+            path: 'CHANGELOG.md'
           });
 
           // Use the SHA to get the raw content from the Blob API
@@ -89,7 +89,7 @@ runs:
           console.log(changelogContent);
           return {
             body: changelogContent,
-            url: `https://github.com/${repoOwner}/${repoName}/blob/main/changelog.md`
+            url: `https://github.com/${repoOwner}/${repoName}/blob/main/CHANGELOG.md`
           };
 
 
