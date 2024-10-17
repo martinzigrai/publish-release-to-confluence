@@ -112,7 +112,7 @@ runs:
                 "body": {
                     "storage": {
                         "value": $value,
-                        "representation": "storage"  # Použite "storage" pre starší editor
+                        "representation": "wiki"  # Použite "storage" pre starší editor
                     }
                 }
             }')
