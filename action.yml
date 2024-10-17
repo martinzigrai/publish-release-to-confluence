@@ -104,21 +104,14 @@ runs:
           --silent)
 
         # Extract existing content and version
-        existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value // ""')
         existing_version=$(echo "$existing_page_response" | jq -r '.version.number')
 
-        # Print the existing content and version
-        echo "Existing content:"
-        echo "$existing_content"
+        # Print the existing version
         echo "Existing version: $existing_version"
 
-        # Combine existing content with new changelog
+        # Create new release notes content
         RELEASE_NOTES="### Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)<br><br>${RELEASE_NOTES}"
-        if [[ -n "$existing_content" ]]; then
-          combined_content="$existing_content<br><br>$RELEASE_NOTES"
-        else
-          combined_content="$RELEASE_NOTES"
-        fi
+        combined_content="$RELEASE_NOTES"  # Nahradíme existujúci obsah novým
 
         # Increment version number
         new_version=$((existing_version + 1))
@@ -137,7 +130,7 @@ runs:
                 "body": {
                     "storage": {
                         "value": $value,
-                        "representation": "storage"
+                        "representation": "editor"  # Použite "editor" pre nový editor
                     }
                 }
             }')
@@ -146,10 +139,11 @@ runs:
 
         # Update existing page with new content
         update_response=$(curl --request PUT \
-        --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${parent_id}" \
-        --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
-        --header 'Accept: application/json' \
-        --header 'Content-Type: application/json' \
-        --data "$payload")
+          --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${parent_id}" \
+          --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
+          --header 'Accept: application/json' \
+          --header 'Content-Type: application/json' \
+          --data "$payload")
 
         echo "Update Response: $update_response"  # Log update response
+
