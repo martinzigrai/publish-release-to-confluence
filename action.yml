@@ -112,14 +112,12 @@ runs:
         echo "$existing_content"
         echo "Existing version: $existing_version"
 
-        # Preprocess release notes
+        # Prepare release notes
         RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed 's/## //g')
         RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed -r 's/<[^>]*>//g')
         RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed -r 's/\[([^]]+)\]\(([^)]+)\)/[\1|\2]/g')
         RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed -r 's/@([^ ]+)/[@\1|https:\/\/github.com\/\1]/g')
-        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed 's/\n/<br\/>/g')
-
-        echo "$RELEASE_NOTES"
+        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed 's/\\n/<br\/>/g')
 
         # Combine existing content with new changelog
         RELEASE_NOTES="### Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)<br><br>${{ steps.get-changelog.outputs.changelogContent }}"
@@ -149,7 +147,7 @@ runs:
                 "body": {
                     "storage": {
                         "value": $value,
-                        "representation": "storage"  # Adjust if needed for new editor
+                        "representation": "storage"
                     }
                 }
             }')
@@ -162,7 +160,7 @@ runs:
           --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
           --header 'Accept: application/json' \
           --header 'Content-Type: application/json' \
-          --data "$payload" 2>/dev/null)  # Suppress curl error output
+          --data "$payload")
 
         # Log response and error checking
         echo "Update Response: $update_response"  # Log update response
