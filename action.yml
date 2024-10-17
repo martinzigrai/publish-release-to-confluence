@@ -37,7 +37,7 @@ inputs:
     type: string
   github_api_token:
     description: "Github API Token"
-    required: true
+    required: false
     type: string
   confluence_api_token:
     description: "Confluence API Token"
