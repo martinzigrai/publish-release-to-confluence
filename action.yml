@@ -62,25 +62,22 @@ runs:
       uses: actions/github-script@v7
       with:
         script: |
-          const repoOwner = '${{ inputs.repoOwner }}'; 
-          const repoName = '${{ inputs.repoName }}'; 
-
-          if (!repoOwner || !repoName) {
-            throw new Error('Repository owner and name must be provided.');
-          }
-
-          // Fetch the contents of changelog.md
-          const { data: file } = await github.rest.repos.getContent({
+          // Get the file info to fetch the SHA
+          const { data: fileInfo } = await github.rest.repos.getContent({
             owner: repoOwner,
             repo: repoName,
             path: 'changelog.md'
           });
 
-          // Decode content from base64
-          const changelogContent = Buffer.from(file.content, 'base64').toString('utf-8');
+          // Use the SHA to get the raw content from the Blob API
+          const { data: blobData } = await github.rest.git.getBlob({
+            owner: repoOwner,
+            repo: repoName,
+            blob_sha: fileInfo.sha
+          });
 
-          console.log(`Fetching changelog from repository: ${repoOwner}/${repoName}`);
-
+          // Decode the blob content
+          const changelogContent = Buffer.from(blobData.content, 'base64').toString('utf-8');
 
           console.log(changelogContent);
           return {
