@@ -57,26 +57,32 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Get Release
-      id: get-release
+    - name: Get Changelog
+      id: get-changelog
       uses: actions/github-script@v7
       with:
         script: |
-          const tag = '${{ inputs.tag }}';
-          const release = await github.rest.repos.getReleaseByTag({
-            owner: '${{ inputs.repoOwner }}',
-            repo: '${{ inputs.repoName }}',
-            tag: tag
-          });
-          if (!release || !release.data.body) {
-              console.error('Invalid release');
-              return;
-          }
-          console.log(release.data.body);
-          return {
-              body: release.data.body,
-              url: `https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}/releases/tag/${tag}`
+          const { repoOwner, repoName } = { 
+            owner: '${{ inputs.repoOwner }}', 
+            repo: '${{ inputs.repoName }}' 
           };
+          
+          // Fetch the contents of changelog.md
+          const { data: file } = await github.rest.repos.getContent({
+            owner: repoOwner,
+            repo: repoName,
+            path: 'changelog.md'
+          });
+
+          // Decode content from base64
+          const changelogContent = Buffer.from(file.content, 'base64').toString('utf-8');
+          
+          console.log(changelogContent);
+          return {
+            body: changelogContent,
+            url: `https://github.com/${repoOwner}/${repoName}/blob/main/changelog.md` // or the relevant branch
+          };
+
 
     - name: Create or Update Release Notes Page in Confluence
       id: create_or_update_confluence_page
