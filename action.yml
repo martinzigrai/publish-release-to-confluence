@@ -120,6 +120,9 @@ runs:
           combined_content="$RELEASE_NOTES"
         fi
 
+        # Escape HTML
+        combined_content=$(echo "$combined_content" | sed 's/&/&amp;/g; s/</&lt;/g; s/>/&gt;/g; s/"/&quot;/g; s/'"'"'/&#39;/g')
+
         # Increment version number
         new_version=$((existing_version + 1))
 
