@@ -85,9 +85,9 @@ runs:
 
 
         # Combine existing content with new release notes
-        RELEASE_NOTES="Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)\n\n${RELEASE_NOTES}"
+        RELEASE_NOTES="Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)<br>${RELEASE_NOTES}"
         if [[ -n "$existing_content" ]]; then
-          combined_content="$existing_content\n\n$RELEASE_NOTES"
+          combined_content="$existing_content<br>$RELEASE_NOTES"
         else
           combined_content="$RELEASE_NOTES"
         fi
@@ -99,7 +99,7 @@ runs:
         payload=$(jq -n \
             --arg value "$combined_content" \
             --arg version "$new_version" \
-            --arg title "Release: ${{ inputs.tag }}" \
+            --arg title "Release: ${{ inputs.title }}" \
             '{
                 "version": {
                     "number": ($version | tonumber)
