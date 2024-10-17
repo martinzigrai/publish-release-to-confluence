@@ -1,6 +1,6 @@
 name: Release Notes to Confluence Publisher
 author: Gershon Alvais
-description: Confluence Release BOT. This action will create a release page in confluence with the release notes.
+description: Confluence Release BOT. This action will create a release page in Confluence with the release notes.
 branding:
   icon: "book"
   color: "blue"
@@ -15,7 +15,7 @@ inputs:
     required: true
     type: string
   title:
-    description: Title of the page.  Release tag.
+    description: Title of the page. Release tag.
     required: true
     type: string
   parentId:
@@ -42,15 +42,15 @@ inputs:
     required: true
     type: string
   appName:
-    Description: Name of the app. This will be used in the release notes.
+    description: Name of the app. This will be used in the release notes.
     required: true
     type: string
   repoOwner:
-    Description: Owner of the repository. This will be used to fetch the release notes.
+    description: Owner of the repository. This will be used to fetch the release notes.
     required: true
     type: string
   repoName:
-    Description: Name of the repository. This will be used to fetch the release notes.
+    description: Name of the repository. This will be used to fetch the release notes.
     required: true
     type: string
 
@@ -87,8 +87,8 @@ runs:
       id: create_or_update_confluence_page
       shell: bash
       env:
-        RELEASE_NOTES: ${{ steps.get-changelog.outputs.result && fromJSON(steps.get-changelog.outputs.result).body }}
-        RELEASE_URL: ${{ steps.get-changelog.outputs.result && fromJSON(steps.get-changelog.outputs.result).url }}
+        RELEASE_NOTES: ${{ steps.get-changelog.outputs.body }}
+        RELEASE_URL: ${{ steps.get-changelog.outputs.url }}
       run: |
         parent_id="${{ inputs.parentId }}"
         echo "Parent Page ID: $parent_id"  # Log parent page ID
@@ -125,7 +125,7 @@ runs:
         payload=$(jq -n \
             --arg value "$combined_content" \
             --arg version "$new_version" \
-            --arg title " ${{ inputs.title }}" \
+            --arg title "${{ inputs.title }}" \
             '{
                 "version": {
                     "number": ($version | tonumber)
