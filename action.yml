@@ -83,6 +83,9 @@ runs:
 
           // Decode the blob content from base64
           const changelogContent = Buffer.from(blobData.content, 'base64').toString('utf-8');
+          
+          console.log(fileInfo.sha);
+
 
           console.log(changelogContent);
           return {
