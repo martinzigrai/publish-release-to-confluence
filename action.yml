@@ -59,102 +59,76 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Get CHANGELOG
-      id: get-changelog
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const repoOwner = '${{ inputs.repoOwner }}'; 
-          const repoName = '${{ inputs.repoName }}'; 
-          const branch = 'main'; // Specify your branch name here
+    - name: Create or Update Release Notes Page in Confluence
+      id: create_or_update_confluence_page
+      shell: bash
+      env:
+        RELEASE_NOTES: ${{ steps.get-changelog.outputs.changelogContent }}
+        RELEASE_URL: "https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}/blob/main/CHANGELOG.md"  # Adjust the URL if necessary
+      run: |
+        parent_id="${{ inputs.parentId }}"
+        echo "Parent Page ID: $parent_id"  # Log parent page ID
 
-          // Fetch the contents of CHANGELOG.md directly
-          const { data: fileInfo } = await github.rest.repos.getContent({
-            owner: repoOwner,
-            repo: repoName,
-            path: 'CHANGELOG.md',
-            ref: branch
-          });
+        # Get existing page content
+        existing_page_response=$(curl --request GET \
+          --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${parent_id}?expand=body.storage,version" \
+          --user "${{ inputs.confluence_email}}:${{ inputs.confluence_api_token }}" \
+          --header 'Accept: application/json' \
+          --silent)
 
-          // Decode the content if it's base64 encoded
-          const changelogContent = Buffer.from(fileInfo.content, 'base64').toString('utf-8');
-          
-          console.log(changelogContent); // Log for debugging
+        # Extract existing version
+        existing_version=$(echo "$existing_page_response" | jq -r '.version.number')
 
-          // Return the changelog content
-          return {
-            changelogContent
-          };
+        # Print the existing version
+        echo "Existing version: $existing_version"
 
-   - name: Create or Update Release Notes Page in Confluence
-    id: create_or_update_confluence_page
-    shell: bash
-    env:
-      RELEASE_NOTES: ${{ steps.get-changelog.outputs.changelogContent }}
-      RELEASE_URL: "https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}/blob/main/CHANGELOG.md"  # Adjust the URL if necessary
-    run: |
-      parent_id="${{ inputs.parentId }}"
-      echo "Parent Page ID: $parent_id"  # Log parent page ID
+        # Create new release notes content
+        # Uistite sa, že RELEASE_NOTES je správne naformátovaný
+        combined_content="### Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)<br><br>${{ steps.get-changelog.outputs.changelogContent }}"
 
-      # Get existing page content
-      existing_page_response=$(curl --request GET \
-        --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${parent_id}?expand=body.storage,version" \
-        --user "${{ inputs.confluence_email}}:${{ inputs.confluence_api_token }}" \
-        --header 'Accept: application/json' \
-        --silent)
+        # Log changelog content for debugging
+        echo "Changelog Content: $RELEASE_NOTES"
 
-      # Extract existing version
-      existing_version=$(echo "$existing_page_response" | jq -r '.version.number')
+        # Check if combined_content is empty
+        if [[ -z "$combined_content" ]]; then
+          echo "Combined content is empty. Aborting update."
+          exit 1
+        fi
 
-      # Print the existing version
-      echo "Existing version: $existing_version"
+        # Increment version number
+        new_version=$((existing_version + 1))
 
-      # Create new release notes content
-      # Uistite sa, že RELEASE_NOTES je správne naformátovaný
-      combined_content="### Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)<br><br>${{ steps.get-changelog.outputs.changelogContent }}"
+        # Create updated payload
+        payload=$(jq -n \
+            --arg value "$combined_content" \
+            --arg version "$new_version" \
+            --arg title "${{ inputs.title }}" \
+            '{
+                "version": {
+                    "number": ($version | tonumber)
+                },
+                "title": $title,
+                "type": "page",
+                "body": {
+                    "storage": {
+                        "value": $value,
+                        "representation": "storage"  # Použite "storage" pre starší editor
+                    }
+                }
+            }')
 
-      # Log changelog content for debugging
-      echo "Changelog Content: $RELEASE_NOTES"
+        echo "Payload: $payload"  # Log payload
 
-      # Check if combined_content is empty
-      if [[ -z "$combined_content" ]]; then
-        echo "Combined content is empty. Aborting update."
-        exit 1
-      fi
+        # Update existing page with new content
+        update_response=$(curl --request PUT \
+          --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${parent_id}" \
+          --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
+          --header 'Accept: application/json' \
+          --header 'Content-Type: application/json' \
+          --data "$payload")
 
-      # Increment version number
-      new_version=$((existing_version + 1))
+        echo "Update Response: $update_response"  # Log update response
 
-      # Create updated payload
-      payload=$(jq -n \
-          --arg value "$combined_content" \
-          --arg version "$new_version" \
-          --arg title "${{ inputs.title }}" \
-          '{
-              "version": {
-                  "number": ($version | tonumber)
-              },
-              "title": $title,
-              "type": "page",
-              "body": {
-                  "storage": {
-                      "value": $value,
-                      "representation": "storage"  # Použite "storage" pre starší editor
-                  }
-              }
-          }')
-
-      echo "Payload: $payload"  # Log payload
-
-      # Update existing page with new content
-      update_response=$(curl --request PUT \
-        --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${parent_id}" \
-        --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
-        --header 'Accept: application/json' \
-        --header 'Content-Type: application/json' \
-        --data "$payload")
-
-      echo "Update Response: $update_response"  # Log update response
 
 
 
