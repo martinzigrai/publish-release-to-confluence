@@ -84,7 +84,7 @@ runs:
 
         # Create new release notes content
         # Uistite sa, že RELEASE_NOTES je správne naformátovaný
-        combined_content="### Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)<br><br>${{ steps.get-changelog.outputs.changelogContent }}"
+        combined_content="### Release [${{ inputs.tag }}](${RELEASE_NOTES}) $(date)<br><br>${{ steps.get-changelog.outputs.changelogContent }}"
 
         # Log changelog content for debugging
         echo "Changelog Content: $RELEASE_NOTES"
