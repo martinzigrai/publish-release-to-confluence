@@ -88,8 +88,8 @@ runs:
       id: create_or_update_confluence_page
       shell: bash
       env:
-        RELEASE_NOTES: ${{ steps.get-release.outputs.result && fromJSON(steps.get-release.outputs.result).body }}
-        RELEASE_URL: ${{ steps.get-release.outputs.result && fromJSON(steps.get-release.outputs.result).url }}
+        RELEASE_NOTES: ${{ steps.get-changelog.outputs.result && fromJSON(steps.get-changelog.outputs.result).body }}
+        RELEASE_URL: ${{ steps.get-changelog.outputs.result && fromJSON(steps.get-changelog.outputs.result).url }}
       run: |
         parent_id="${{ inputs.parentId }}"
         echo "Parent Page ID: $parent_id"  # Log parent page ID
