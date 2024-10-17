@@ -6,7 +6,6 @@ branding:
   color: "blue"
 
 inputs:
-  # Confluence configs
   spaceId:
     description: Confluence space id. This is the space where the release page will be created.
     required: true
@@ -29,12 +28,15 @@ inputs:
   ConfluenceSpaceKey:
     description: Confluence space key
     type: string
-  # Release notes
-  tag:
+  tag: 
     required: true
     type: string
   confluence_email:
     description: "Confluence Email"
+    required: true
+    type: string
+  github_api_token:
+    description: "Github API Token"
     required: true
     type: string
   confluence_api_token:
@@ -70,37 +72,33 @@ runs:
           const { data: fileInfo } = await github.rest.repos.getContent({
             owner: repoOwner,
             repo: repoName,
-            path: 'CHANGELOG.md',  // Updated to the new file name
-            ref: branch  // Specify the branch name
+            path: 'CHANGELOG.md',
+            ref: branch
           });
 
           // Use the SHA to get the raw content from the Blob API
           const { data: blobData } = await github.rest.git.getBlob({
             owner: repoOwner,
             repo: repoName,
-            blob_sha: fileInfo.sha  // No changes needed here
+            blob_sha: fileInfo.sha
           });
 
           // Decode the blob content from base64
           const changelogContent = Buffer.from(blobData.content, 'base64').toString('utf-8');
           
-          console.log(fileInfo.sha);
+          console.log(changelogContent); // Log for debugging
 
-
-          console.log(changelogContent);
+          // Return the changelog content
           return {
-            body: changelogContent,
-            url: `https://github.com/${repoOwner}/${repoName}/blob/${branch}/CHANGELOG.md`  // Updated to the new file name
+            changelogContent
           };
-
-
 
     - name: Create or Update Release Notes Page in Confluence
       id: create_or_update_confluence_page
       shell: bash
       env:
-        RELEASE_NOTES: ${{ steps.get-changelog.outputs.body }}
-        RELEASE_URL: ${{ steps.get-changelog.outputs.url }}
+        RELEASE_NOTES: ${{ steps.get-changelog.outputs.changelogContent }}
+        RELEASE_URL: "https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}/blob/main/CHANGELOG.md"  # Adjust the URL if necessary
       run: |
         parent_id="${{ inputs.parentId }}"
         echo "Parent Page ID: $parent_id"  # Log parent page ID
@@ -122,7 +120,6 @@ runs:
         echo "Existing version: $existing_version"
 
         # Combine existing content with new changelog
-        # Adding a header for the release
         RELEASE_NOTES="### Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)<br><br>${RELEASE_NOTES}"
         if [[ -n "$existing_content" ]]; then
           combined_content="$existing_content<br><br>$RELEASE_NOTES"
