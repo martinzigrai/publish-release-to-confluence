@@ -57,6 +57,27 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Get Release
+      id: get-release
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const tag = '${{ inputs.tag }}';
+          const release = await github.rest.repos.getReleaseByTag({
+            owner: '${{ inputs.repoOwner }}',
+            repo: '${{ inputs.repoName }}',
+            tag: tag
+          });
+          if (!release || !release.data.body) {
+              console.error('Invalid release');
+              return;
+          }
+          console.log(release.data.body);
+          return {
+              body: release.data.body,
+              url: `https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}/releases/tag/${tag}`
+          };
+
     - name: Create or Update Release Notes Page in Confluence
       id: create_or_update_confluence_page
       shell: bash
