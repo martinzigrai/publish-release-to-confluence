@@ -69,15 +69,19 @@ runs:
 
         # Get existing page content
         existing_page_response=$(curl --request GET \
-          --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${parent_id}" \
+          --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${parent_id}?expand=body.storage,version" \
           --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
-          --header 'Accept: application/json')
+          --header 'Accept: application/json' \
+          --silent)
 
         # Extract existing content and version
         existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value // ""')
         existing_version=$(echo "$existing_page_response" | jq -r '.version.number')
 
-        echo "Existing content: $existing_content"
+        # Print the existing content and version
+        echo "Existing content:"
+        echo "$existing_content"
+        echo "Existing version: $existing_version"
 
 
         # Combine existing content with new release notes
