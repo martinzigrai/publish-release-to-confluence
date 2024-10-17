@@ -85,7 +85,7 @@ runs:
           return {
             changelogContent
           };
-          
+
     - name: Create or Update Release Notes Page in Confluence
       id: create_or_update_confluence_page
       shell: bash
@@ -99,27 +99,25 @@ runs:
         # Get existing page content
         existing_page_response=$(curl --request GET \
           --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${parent_id}?expand=body.storage,version" \
-          --user "${{ inputs.confluence_email}}:${{ inputs.confluence_api_token }}" \
+          --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
           --header 'Accept: application/json' \
           --silent)
 
-        # Extract existing version
+        # Extract existing content and version
+        existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value // ""')
         existing_version=$(echo "$existing_page_response" | jq -r '.version.number')
 
-        # Print the existing version
+        # Print the existing content and version
+        echo "Existing content:"
+        echo "$existing_content"
         echo "Existing version: $existing_version"
 
-        # Create new release notes content
-        # Uistite sa, že RELEASE_NOTES je správne naformátovaný
-        combined_content="### Release [${{ inputs.tag }}](${RELEASE_NOTES}) $(date)<br><br>${{ steps.get-changelog.outputs.changelogContent }}"
-
-        # Log changelog content for debugging
-        echo "Changelog Content: $RELEASE_NOTES"
-
-        # Check if combined_content is empty
-        if [[ -z "$combined_content" ]]; then
-          echo "Combined content is empty. Aborting update."
-          exit 1
+        # Combine existing content with new changelog
+        RELEASE_NOTES="### Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)<br><br>${{ steps.get-changelog.outputs.changelogContent }}"
+        if [[ -n "$existing_content" ]]; then
+          combined_content="$existing_content<br><br>$RELEASE_NOTES"
+        else
+          combined_content="$RELEASE_NOTES"
         fi
 
         # Increment version number
@@ -139,7 +137,7 @@ runs:
                 "body": {
                     "storage": {
                         "value": $value,
-                        "representation": "wiki"  # Použite "storage" pre starší editor
+                        "representation": "storage"
                     }
                 }
             }')
@@ -154,8 +152,11 @@ runs:
           --header 'Content-Type: application/json' \
           --data "$payload")
 
+        # Log response and error checking
         echo "Update Response: $update_response"  # Log update response
 
-
-
-
+        # Check for errors in the update response
+        if [[ $(echo "$update_response" | jq -r '.statusCode // empty') ]]; then
+          echo "Error updating Confluence page: $(echo "$update_response" | jq -r '.message // "No error message")"
+          exit 1
+        fi
