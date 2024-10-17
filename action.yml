@@ -147,7 +147,7 @@ runs:
                 "body": {
                     "storage": {
                         "value": $value,
-                        "representation": "storage"
+                        "representation": "wiki"
                     }
                 }
             }')
