@@ -66,7 +66,7 @@ runs:
             owner: '${{ inputs.repoOwner }}', 
             repo: '${{ inputs.repoName }}' 
           };
-          
+
           // Fetch the contents of changelog.md
           const { data: file } = await github.rest.repos.getContent({
             owner: repoOwner,
@@ -76,13 +76,12 @@ runs:
 
           // Decode content from base64
           const changelogContent = Buffer.from(file.content, 'base64').toString('utf-8');
-          
+
           console.log(changelogContent);
           return {
             body: changelogContent,
             url: `https://github.com/${repoOwner}/${repoName}/blob/main/changelog.md` // or the relevant branch
           };
-
 
     - name: Create or Update Release Notes Page in Confluence
       id: create_or_update_confluence_page
@@ -110,11 +109,11 @@ runs:
         echo "$existing_content"
         echo "Existing version: $existing_version"
 
-
-        # Combine existing content with new release notes
-        RELEASE_NOTES="Release [${{ inputs.tag }}](${RELEASE_URL}) $(date) ${RELEASE_NOTES}"
+        # Combine existing content with new changelog
+        # Adding a header for the release
+        RELEASE_NOTES="### Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)<br><br>${RELEASE_NOTES}"
         if [[ -n "$existing_content" ]]; then
-          combined_content="$existing_content $RELEASE_NOTES"
+          combined_content="$existing_content<br><br>$RELEASE_NOTES"
         else
           combined_content="$RELEASE_NOTES"
         fi
@@ -152,5 +151,3 @@ runs:
         --data "$payload")
 
         echo "Update Response: $update_response"  # Log update response
-
-
