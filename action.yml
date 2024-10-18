@@ -100,6 +100,9 @@ runs:
         RELEASE_NOTES: "${{ steps.get-changelog.outputs.changelogContent }}"
         RELEASE_URL: "https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}/blob/main/CHANGELOG.md"
       run: |
+        echo "Changelog content from previous step:"
+        echo "${RELEASE_NOTES}"  # Debug: Print the value of RELEASE_NOTES
+
         parent_id="${{ inputs.parentId }}"
         echo "Parent Page ID: $parent_id"  # Log parent page ID
 
@@ -121,9 +124,6 @@ runs:
         echo "Existing content:"
         echo "$existing_content"
         echo "Existing version: $existing_version"
-
-        # Debug - Print RELEASE_NOTES before conversion
-        echo "RELEASE_NOTES before conversion: $RELEASE_NOTES"
 
         # Convert Markdown to HTML (requires pandoc installed)
         RELEASE_NOTES=$(echo "$RELEASE_NOTES" | pandoc -f markdown -t html)
