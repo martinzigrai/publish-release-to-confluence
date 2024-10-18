@@ -97,8 +97,8 @@ runs:
       id: create_or_update_confluence_page
       shell: bash
       env:
-        RELEASE_NOTES: ${{ steps.get-changelog.outputs.changelogContent }}
-        RELEASE_URL: "https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}/blob/main/CHANGELOG.md"  # Adjust the URL if necessary
+        RELEASE_NOTES: "${{ steps.get-changelog.outputs.changelogContent }}"
+        RELEASE_URL: "https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}/blob/main/CHANGELOG.md"
       run: |
         parent_id="${{ inputs.parentId }}"
         echo "Parent Page ID: $parent_id"  # Log parent page ID
