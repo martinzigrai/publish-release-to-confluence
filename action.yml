@@ -110,6 +110,9 @@ runs:
           --header 'Accept: application/json' \
           --silent)
 
+        # Debug - Print existing page response
+        echo "Existing page response: $existing_page_response"
+
         # Extract existing content and version
         existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value // ""')
         existing_version=$(echo "$existing_page_response" | jq -r '.version.number')
@@ -119,8 +122,14 @@ runs:
         echo "$existing_content"
         echo "Existing version: $existing_version"
 
+        # Debug - Print RELEASE_NOTES before conversion
+        echo "RELEASE_NOTES before conversion: $RELEASE_NOTES"
+
         # Convert Markdown to HTML (requires pandoc installed)
-        RELEASE_NOTES=$(echo "${RELEASE_NOTES}" | pandoc -f markdown -t html)
+        RELEASE_NOTES=$(echo "$RELEASE_NOTES" | pandoc -f markdown -t html)
+
+        # Debug - Print RELEASE_NOTES after conversion
+        echo "RELEASE_NOTES after conversion: $RELEASE_NOTES"
 
         # Combine existing content with new changelog
         if [[ -n "$existing_content" ]]; then
