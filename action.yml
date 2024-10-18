@@ -80,7 +80,7 @@ runs:
           const changelogContent = Buffer.from(fileInfo.content, 'base64').toString('utf-8');
           
           // Log for debugging
-          console.log(changelogContent);
+          console.log(changelogContent); // Log changelog content
 
           // Return the changelog content
           return {
@@ -92,6 +92,11 @@ runs:
       run: |
         sudo apt-get update
         sudo apt-get install -y pandoc
+
+    - name: Set TEST RELEASE_NOTES
+      run: |
+        echo "TEST CHANGELOG CONTENT" > release_notes.txt
+        echo "::set-output name=changelogContent::$(<release_notes.txt)"
 
     - name: Create or Update Release Notes Page in Confluence
       id: create_or_update_confluence_page
