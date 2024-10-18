@@ -170,6 +170,7 @@ runs:
 
         # Check for errors in the update response
         if [[ $(echo "$update_response" | jq -r '.statusCode // empty') ]]; then
-          echo "Error updating Confluence page: $(echo "$update_response" | jq -r '.message // "No error message")"
+          error_message=$(echo "$update_response" | jq -r '.message // "No error message"')
+          echo "Error updating Confluence page: $error_message"
           exit 1
         fi
