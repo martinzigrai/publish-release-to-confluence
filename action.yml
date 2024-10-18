@@ -76,6 +76,7 @@ runs:
             ref: branch
           });
 
+
           // Decode the content if it's base64 encoded
           const changelogContent = Buffer.from(fileInfo.content, 'base64').toString('utf-8');
           
