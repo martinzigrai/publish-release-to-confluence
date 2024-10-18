@@ -89,9 +89,14 @@ runs:
       id: create_or_update_confluence_page
       shell: bash
       env:
-        RELEASE_NOTES: ${{ steps.get-changelog.outputs.result && fromJSON(steps.get-changelog.outputs.result).body }}
+        RELEASE_NOTES: ${{ steps.get-changelog.outputs.changelogContent }}  # Zmeniť na správny názov výstupu
         RELEASE_URL: "https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}/blob/main/CHANGELOG.md"
+
       run: |
+        echo "RELEASE_NOTES content:"
+        echo "${RELEASE_NOTES}"
+
+
         echo "Changelog content from previous step:"
         echo "${RELEASE_NOTES}"
 
