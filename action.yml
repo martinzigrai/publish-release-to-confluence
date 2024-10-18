@@ -87,6 +87,11 @@ runs:
             changelogContent
           };
 
+    - name: Install pandoc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pandoc
+
     - name: Create or Update Release Notes Page in Confluence
       id: create_or_update_confluence_page
       shell: bash
