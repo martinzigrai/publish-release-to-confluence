@@ -121,9 +121,9 @@ runs:
         RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed 's/\\n/<br\/>/g')
 
         # Combine existing content with new changelog
-        RELEASE_NOTES="### Release [${{ inputs.tag }}](${RELEASE_URL}) $(date)<br><br>${{ steps.get-changelog.outputs.changelogContent }}"
+        RELEASE_NOTES="${{ steps.get-changelog.outputs.changelogContent }}"
         if [[ -n "$existing_content" ]]; then
-          combined_content="$existing_content<br><br>$RELEASE_NOTES"
+          combined_content="$RELEASE_NOTES"
         else
           combined_content="$RELEASE_NOTES"
         fi
@@ -148,7 +148,7 @@ runs:
                 "body": {
                     "storage": {
                         "value": $value,
-                        "representation": "wiki"
+                        "representation": "storage"
                     }
                 }
             }')
