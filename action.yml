@@ -113,23 +113,19 @@ runs:
         echo "$existing_content"
         echo "Existing version: $existing_version"
 
-        # Prepare release notes
-        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed 's/## //g')
-        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed -r 's/<[^>]*>//g')
-        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed -r 's/\[([^]]+)\]\(([^)]+)\)/[\1|\2]/g')
-        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed -r 's/@([^ ]+)/[@\1|https:\/\/github.com\/\1]/g')
-        RELEASE_NOTES=$(echo -e "${RELEASE_NOTES}" | sed 's/\\n/<br\/>/g')
+        # Convert Markdown to HTML (requires pandoc installed)
+        RELEASE_NOTES=$(echo "${RELEASE_NOTES}" | pandoc -f markdown -t html)
 
         # Combine existing content with new changelog
-        RELEASE_NOTES="${{ steps.get-changelog.outputs.changelogContent }}"
         if [[ -n "$existing_content" ]]; then
-          combined_content="$RELEASE_NOTES"
+          combined_content="$existing_content<br><br>$RELEASE_NOTES"
         else
           combined_content="$RELEASE_NOTES"
         fi
 
-        # Escape HTML
-        #combined_content=$(echo "$combined_content" | sed 's/&/&amp;/g; s/</&lt;/g; s/>/&gt;/g; s/"/&quot;/g; s/'"'"'/&#39;/g')
+        # Debug - Print the final HTML content before sending to Confluence
+        echo "HTML content to be sent to Confluence:"
+        echo "$combined_content"
 
         # Increment version number
         new_version=$((existing_version + 1))
