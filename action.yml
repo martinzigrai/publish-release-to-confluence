@@ -78,6 +78,8 @@ runs:
           const changelogContent = Buffer.from(fileInfo.content, 'base64').toString('utf-8');
           console.log(changelogContent);
           return { changelogContent };
+          core.setOutput("changelogContent", changelogContent);
+
 
     - name: Install pandoc
       shell: bash
@@ -89,7 +91,7 @@ runs:
       id: create_or_update_confluence_page
       shell: bash
       env:
-        RELEASE_NOTES: ${{ steps.get-changelog.outputs }}  # Zmeniť na správny názov výstupu
+        RELEASE_NOTES: ${{ steps.get-changelog.outputs.changelogContent }}
         RELEASE_URL: "https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}/blob/main/CHANGELOG.md"
 
       run: |
