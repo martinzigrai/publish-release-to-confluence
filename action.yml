@@ -68,7 +68,6 @@ runs:
           const repoName = '${{ inputs.repoName }}'; 
           const branch = 'main'; // Specify your branch name here
 
-          // Fetch the contents of CHANGELOG.md directly
           const { data: fileInfo } = await github.rest.repos.getContent({
             owner: repoOwner,
             repo: repoName,
@@ -76,28 +75,15 @@ runs:
             ref: branch
           });
 
-          // Decode the content if it's base64 encoded
           const changelogContent = Buffer.from(fileInfo.content, 'base64').toString('utf-8');
-          
-          // Log for debugging
-          console.log(changelogContent); // Log changelog content
-
-          // Return the changelog content
-          return {
-            changelogContent
-          };
+          console.log(changelogContent);
+          return { changelogContent };
 
     - name: Install pandoc
       shell: bash
       run: |
         sudo apt-get update
         sudo apt-get install -y pandoc
-
-    - name: Set TEST RELEASE_NOTES
-      shell: bash
-      run: |
-        echo "TEST CHANGELOG CONTENT" > release_notes.txt
-        echo "::set-output name=changelogContent::$(<release_notes.txt)"
 
     - name: Create or Update Release Notes Page in Confluence
       id: create_or_update_confluence_page
@@ -107,10 +93,9 @@ runs:
         RELEASE_URL: "https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}/blob/main/CHANGELOG.md"
       run: |
         echo "Changelog content from previous step:"
-        echo "${RELEASE_NOTES}"  # Debug: Print the value of RELEASE_NOTES
+        echo "${RELEASE_NOTES}"
 
         parent_id="${{ inputs.parentId }}"
-        echo "Parent Page ID: $parent_id"  # Log parent page ID
 
         # Get existing page content
         existing_page_response=$(curl --request GET \
@@ -119,23 +104,11 @@ runs:
           --header 'Accept: application/json' \
           --silent)
 
-        # Debug - Print existing page response
-        echo "Existing page response: $existing_page_response"
-
-        # Extract existing content and version
         existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value // ""')
         existing_version=$(echo "$existing_page_response" | jq -r '.version.number')
 
-        # Print the existing content and version
-        echo "Existing content:"
-        echo "$existing_content"
-        echo "Existing version: $existing_version"
-
         # Convert Markdown to HTML (requires pandoc installed)
         RELEASE_NOTES=$(echo "$RELEASE_NOTES" | pandoc -f markdown -t html)
-
-        # Debug - Print RELEASE_NOTES after conversion
-        echo "RELEASE_NOTES after conversion: $RELEASE_NOTES"
 
         # Combine existing content with new changelog
         if [[ -n "$existing_content" ]]; then
@@ -143,10 +116,6 @@ runs:
         else
           combined_content="$RELEASE_NOTES"
         fi
-
-        # Debug - Print the final HTML content before sending to Confluence
-        echo "HTML content to be sent to Confluence:"
-        echo "$combined_content"
 
         # Increment version number
         new_version=$((existing_version + 1))
@@ -157,9 +126,7 @@ runs:
             --arg version "$new_version" \
             --arg title "${{ inputs.title }}" \
             '{
-                "version": {
-                    "number": ($version | tonumber)
-                },
+                "version": { "number": ($version | tonumber) },
                 "title": $title,
                 "type": "page",
                 "body": {
@@ -170,8 +137,6 @@ runs:
                 }
             }')
 
-        echo "Payload: $payload"  # Log payload
-
         # Update existing page with new content
         update_response=$(curl --request PUT \
           --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${parent_id}" \
@@ -179,9 +144,6 @@ runs:
           --header 'Accept: application/json' \
           --header 'Content-Type: application/json' \
           --data "$payload")
-
-        # Log response and error checking
-        echo "Update Response: $update_response"  # Log update response
 
         # Check for errors in the update response
         if [[ $(echo "$update_response" | jq -r '.statusCode // empty') ]]; then
