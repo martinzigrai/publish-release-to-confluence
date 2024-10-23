@@ -91,12 +91,10 @@ runs:
       shell: bash
       env:
         RELEASE_NOTES: ${{ steps.get-changelog.outputs.changelogContent }}
+        REPO_URL: "https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}"
+
 
       run: |
-        echo "RELEASE_NOTES content:"
-        echo "${RELEASE_NOTES}"
-
-
         echo "Changelog content from previous step:"
         echo "${RELEASE_NOTES}"
 
@@ -114,6 +112,15 @@ runs:
 
         # Convert Markdown to HTML (requires pandoc installed)
         RELEASE_NOTES=$(echo "$RELEASE_NOTES" | pandoc -f markdown -t html)
+
+        RELEASE_DATE=$(date +"%d-%m-%Y")
+
+        ADDITIONAL_INFO="<h3>INFORMATION ABOUT PRODUCT</h3>
+        <p><strong>Release date:</strong> ${RELEASE_DATE}</p>
+        <p><strong>Link to repositary:</strong> <a href=\"${REPO_URL}\">${REPO_URL}</a></p>
+        <br>"
+
+        RELEASE_NOTES="${ADDITIONAL_INFO}${RELEASE_NOTES}"
 
         # Increment version number
         new_version=$((existing_version + 1))
