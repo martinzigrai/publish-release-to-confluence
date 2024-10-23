@@ -115,18 +115,18 @@ runs:
         ADDITIONAL_INFO+="**Release date:** ${RELEASE_DATE}\n"
         ADDITIONAL_INFO+="**Link to repository:** [${REPO_URL}](${REPO_URL})\n\n"
 
-        # Convert Markdown to HTML for both additional info and changelog
-        ADDITIONAL_INFO_HTML=$(echo "$ADDITIONAL_INFO" | pandoc -f markdown -t html)
-        RELEASE_NOTES=$(echo "$RELEASE_NOTES" | pandoc -f markdown -t html)
+        # Combine additional info and changelog in Markdown
+        COMBINED_CONTENT="${ADDITIONAL_INFO}${RELEASE_NOTES}"
 
-        RELEASE_NOTES="${ADDITIONAL_INFO_HTML}<br><br>${RELEASE_NOTES}"
+        # Convert Markdown to HTML
+        COMBINED_CONTENT_HTML=$(echo "$COMBINED_CONTENT" | pandoc -f markdown -t html)
 
         # Increment version number
         new_version=$((existing_version + 1))
 
         # Create updated payload
         payload=$(jq -n \
-            --arg value "$RELEASE_NOTES" \
+            --arg value "$COMBINED_CONTENT_HTML" \
             --arg version "$new_version" \
             --arg title "${{ inputs.title }}" \
             '{
