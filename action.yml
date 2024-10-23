@@ -72,7 +72,7 @@ runs:
           });
 
           const changelogContent = Buffer.from(fileInfo.content, 'base64').toString('utf-8');
-          console.log(changelogContent);
+          // console.log(changelogContent); // 
 
           core.setOutput("changelogContent", changelogContent);
 
@@ -91,7 +91,6 @@ runs:
       shell: bash
       env:
         RELEASE_NOTES: ${{ steps.get-changelog.outputs.changelogContent }}
-        #RELEASE_URL: "https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}/blob/main/CHANGELOG.md"
 
       run: |
         echo "RELEASE_NOTES content:"
