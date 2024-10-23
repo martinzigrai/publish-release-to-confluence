@@ -112,11 +112,12 @@ runs:
 
         RELEASE_DATE=$(date +"%d-%m-%Y")
         ADDITIONAL_INFO="# INFORMATION ABOUT PRODUCT\n\n"
-        ADDITIONAL_INFO+="**Release date:** ${RELEASE_DATE}\n"
-        ADDITIONAL_INFO+="**Link to repository:** [${REPO_URL}](${REPO_URL})\n\n"
+        ADDITIONAL_INFO+="**Release date:** ${RELEASE_DATE}\\\n"  
+        ADDITIONAL_INFO+="**Link to repository:** [${REPO_URL}](${REPO_URL})\\\n\n" 
 
         # Combine additional info and changelog in Markdown
         COMBINED_CONTENT="${ADDITIONAL_INFO}${RELEASE_NOTES}"
+
 
         # Convert Markdown to HTML
         COMBINED_CONTENT_HTML=$(echo "$COMBINED_CONTENT" | pandoc -f markdown -t html)
