@@ -108,11 +108,13 @@ runs:
         RELEASE_NOTES=$(echo "$RELEASE_NOTES" | pandoc -f markdown -t html)
 
         # Combine existing content with new changelog
-        if [[ -n "$existing_content" ]]; then
-          combined_content="$existing_content<br><br>$RELEASE_NOTES"
-        else
-          combined_content="$RELEASE_NOTES"
-        fi
+        #if [[ -n "$existing_content" ]]; then
+        #  combined_content="$existing_content<br><br>$RELEASE_NOTES"
+        #else
+        #  combined_content="$RELEASE_NOTES"
+        #fi
+
+        combined_content="$RELEASE_NOTES"
 
         # Increment version number
         new_version=$((existing_version + 1))
