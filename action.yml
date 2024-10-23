@@ -64,8 +64,6 @@ runs:
           const changelogName = '${{ inputs.changelogName }}';
           const branch = '${{ inputs.branchName }}';
 
-          #const branch = 'main'; // Specify your branch name here
-
           const { data: fileInfo } = await github.rest.repos.getContent({
             owner: repoOwner,
             repo: repoName,
