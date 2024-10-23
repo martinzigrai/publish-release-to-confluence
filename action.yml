@@ -110,17 +110,16 @@ runs:
         existing_content=$(echo "$existing_page_response" | jq -r '.body.storage.value // ""')
         existing_version=$(echo "$existing_page_response" | jq -r '.version.number')
 
-        # Convert Markdown to HTML (requires pandoc installed)
+        RELEASE_DATE=$(date +"%d-%m-%Y")
+        ADDITIONAL_INFO="# INFORMATION ABOUT PRODUCT\n\n"
+        ADDITIONAL_INFO+="**Release date:** ${RELEASE_DATE}\n"
+        ADDITIONAL_INFO+="**Link to repository:** [${REPO_URL}](${REPO_URL})\n\n"
+
+        # Convert Markdown to HTML for both additional info and changelog
+        ADDITIONAL_INFO_HTML=$(echo "$ADDITIONAL_INFO" | pandoc -f markdown -t html)
         RELEASE_NOTES=$(echo "$RELEASE_NOTES" | pandoc -f markdown -t html)
 
-        RELEASE_DATE=$(date +"%d-%m-%Y")
-
-        ADDITIONAL_INFO="<h3>INFORMATION ABOUT PRODUCT</h3>
-        <p><strong>Release date:</strong> ${RELEASE_DATE}</p>
-        <p><strong>Link to repositary:</strong> <a href=\"${REPO_URL}\">${REPO_URL}</a></p>
-        <br>"
-
-        RELEASE_NOTES="${ADDITIONAL_INFO}${RELEASE_NOTES}"
+        RELEASE_NOTES="${ADDITIONAL_INFO_HTML}<br><br>${RELEASE_NOTES}"
 
         # Increment version number
         new_version=$((existing_version + 1))
