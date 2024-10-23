@@ -93,7 +93,6 @@ runs:
         RELEASE_NOTES: ${{ steps.get-changelog.outputs.changelogContent }}
         REPO_URL: "https://github.com/${{ inputs.repoOwner }}/${{ inputs.repoName }}"
 
-
       run: |
         echo "Changelog content from previous step:"
         echo "${RELEASE_NOTES}"
@@ -112,16 +111,14 @@ runs:
 
         RELEASE_DATE=$(date +"%d-%m-%Y")
         ADDITIONAL_INFO="# INFORMATION ABOUT PRODUCT\n\n"
-        ADDITIONAL_INFO+="**Release date:** ${RELEASE_DATE}\n\n"
-        ADDITIONAL_INFO+="**Link to repository:** [${REPO_URL}](${REPO_URL})\n\n"
+        ADDITIONAL_INFO+="**Release date:** ${RELEASE_DATE}  \n"
+        ADDITIONAL_INFO+="**Link to repository:** [Repository](${REPO_URL})  \n"
 
         # Combine additional info and changelog in Markdown
         COMBINED_CONTENT="${ADDITIONAL_INFO}\n${RELEASE_NOTES}"
 
-
-
         # Convert Markdown to HTML
-        COMBINED_CONTENT_HTML=$(echo "$COMBINED_CONTENT" | pandoc -f markdown -t html)
+        COMBINED_CONTENT_HTML=$(echo "$COMBINED_CONTENT" | pandoc -f markdown -t html --standalone)
 
         # Increment version number
         new_version=$((existing_version + 1))
