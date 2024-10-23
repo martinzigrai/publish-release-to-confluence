@@ -117,15 +117,15 @@ runs:
         # Combine additional info and changelog in Markdown
         COMBINED_CONTENT="${ADDITIONAL_INFO}\n${RELEASE_NOTES}"
 
-        # Convert Markdown to HTML
-        COMBINED_CONTENT_HTML=$(echo "$COMBINED_CONTENT" | pandoc -f markdown -t html --standalone)
+        # Convert Markdown to Confluence storage format using pandoc
+        COMBINED_CONTENT_STORAGE=$(echo "$COMBINED_CONTENT" | pandoc -f markdown -t confluence)
 
         # Increment version number
         new_version=$((existing_version + 1))
 
         # Create updated payload
         payload=$(jq -n \
-            --arg value "$COMBINED_CONTENT_HTML" \
+            --arg value "$COMBINED_CONTENT_STORAGE" \
             --arg version "$new_version" \
             --arg title "${{ inputs.title }}" \
             '{
@@ -154,3 +154,4 @@ runs:
           echo "Error updating Confluence page: $error_message"
           exit 1
         fi
+
