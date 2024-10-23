@@ -1,15 +1,12 @@
 name: Release Notes to Confluence Publisher
 author: Gershon Alvais
-description: Confluence Release BOT. This action will create a release page in Confluence with the release notes.
+modified_by: Martin Žigrai
+description: Confluence Release BOT. This action sends a CHANGELOG.md and creates a page in Confluence.
 branding:
   icon: "book"
   color: "blue"
 
 inputs:
-  spaceId:
-    description: Confluence space id. This is the space where the release page will be created.
-    required: true
-    type: string
   status:
     required: true
     type: string
@@ -17,27 +14,17 @@ inputs:
     description: Title of the page. Release tag.
     required: true
     type: string
-  parentId:
+  pageId:    
     description: Parent page id. The release page will be created under this page.
     required: true
-    type: string
+    type: string    
   ConfluenceBaseUrl:
     description: Confluence base url
-    required: true
-    type: string
-  ConfluenceSpaceKey:
-    description: Confluence space key
-    type: string
-  tag: 
     required: true
     type: string
   confluence_email:
     description: "Confluence Email"
     required: true
-    type: string
-  github_api_token:
-    description: "Github API Token"
-    required: false
     type: string
   confluence_api_token:
     description: "Confluence API Token"
@@ -105,11 +92,11 @@ runs:
         echo "Changelog content from previous step:"
         echo "${RELEASE_NOTES}"
 
-        parent_id="${{ inputs.parentId }}"
+        page_id="${{ inputs.pageId }}"
 
         # Get existing page content
         existing_page_response=$(curl --request GET \
-          --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${parent_id}?expand=body.storage,version" \
+          --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${page_id}?expand=body.storage,version" \
           --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
           --header 'Accept: application/json' \
           --silent)
@@ -149,7 +136,7 @@ runs:
 
         # Update existing page with new content
         update_response=$(curl --request PUT \
-          --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${parent_id}" \
+          --url "${{ inputs.ConfluenceBaseUrl }}/rest/api/content/${page_id}" \
           --user "${{ inputs.confluence_email }}:${{ inputs.confluence_api_token }}" \
           --header 'Accept: application/json' \
           --header 'Content-Type: application/json' \
