@@ -111,17 +111,12 @@ runs:
         existing_version=$(echo "$existing_page_response" | jq -r '.version.number')
 
         RELEASE_DATE=$(date +"%d-%m-%Y")
-        # ADDITIONAL_INFO="# INFORMATION ABOUT PRODUCT\n\n "
-        # ADDITIONAL_INFO+="**Release date:** ${RELEASE_DATE}\\\n "  
-        # ADDITIONAL_INFO+="**Link to repository:** [${REPO_URL}](${REPO_URL})\\\n\n "
 
         RELEASE_NOTES=$(echo "$RELEASE_NOTES" | pandoc -f markdown -t html)
 
         ADDITIONAL_INFO="<h1>INFORMATION ABOUT PRODUCT</h1>
-        <p><strong>Release date:</strong> ${RELEASE_DATE}</p>
-        <p><strong>Link to repository:</strong> <a href=\"${REPO_URL}\">${REPO_URL}</a></p>
-        <br />" 
-
+        <p>Release date: ${RELEASE_DATE}</p>
+        <p>Link to repository: <a href=\"${REPO_URL}\">${REPO_URL}</a></p>" 
 
         # Combine additional info and changelog in Markdown
         COMBINED_CONTENT="${ADDITIONAL_INFO} ${RELEASE_NOTES}"
